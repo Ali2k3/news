@@ -20,5 +20,10 @@
     <p>Name: {{news.author.username}}</p>
     <p>Bio: {{news.author.bio|default_if_none:"No bio"}}</p>
     {% endif %}
+
+    {% if request.user == news.author %}
+    <a href={% url "delete_news" news.pk %}>Delete</a>
+    <a href={% url "news_update" news.pk %}>Update</a>
+    {% endif %}
 </body>
 </html>
