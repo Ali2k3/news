@@ -1,6 +1,10 @@
 from django.shortcuts import render
 from django.http import HttpResponse,JsonResponse
 from .models import News
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import NewsSerializer,NewsCreateSerializer
 
 # Create your views here.
 def home(request):
@@ -28,4 +32,42 @@ def news_api(request):
               }
             }
         )
-    return JsonResponse(response)    
+    return JsonResponse(response) 
+
+@api_view(["GET","POST"])
+
+def news_get_or_create(request):
+    if request.method=="GET":
+        all_news=News.objects.all()
+        serializer=NewsSerializer(all_news,many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    if request.method=="POST":
+        serializer=NewsCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(["GET","PUT","DELETE"])
+def news_detail(request,pk):
+    try:
+        news=News.objects.get(pk=pk)
+    except:
+        return Response({"message":"News not found"},status=status.HTTP_404_NOT_FOUND)
+    if request.method=="GET":
+        serializer=NewsSerializer(news)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    if request.method=="DELETE":
+        news.delete()
+        return Response({"message":"News deleted"},status=status.HTTP_204_NO_CONTENT)
+    if request.method=="PUT":
+        serializer=NewsSerializer(news,data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_202_ACCEPTED)
+        else:
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+
+
